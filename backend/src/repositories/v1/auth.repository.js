@@ -45,6 +45,20 @@ const insertBarberData = async (barberId, name, phone, shopName, location, docum
     return data;
 }
 
+const barberLogin = async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error) {
+        console.error("Login error:", error);
+        throw new Error(error.message);
+    }
+
+    return data;
+}
+
 const barberLogout = async () => {
     const { error } = await supabase.auth.signOut();
 
@@ -60,5 +74,6 @@ module.exports = {
     googleSignupPayload,
     signupWithPassword,
     insertBarberData,
-    barberLogout
+    barberLogout,
+    barberLogin
 }
