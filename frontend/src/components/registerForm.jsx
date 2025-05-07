@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from "react";
+import { baseUrl } from "../constants";
 
 const RegisterForm = ({ onToggle }) => {
     const [step, setStep] = useState(1);
@@ -22,10 +23,23 @@ const RegisterForm = ({ onToggle }) => {
         setStep(2);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
-        // Handle account creation logic here
+        const response = await fetch(`${baseUrl}/api/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(formData),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            console.error('Error:', data);
+            return;
+        }
+        console.log('Success:', data);
+        alert('Account created successfully!');
     };
 
     return (

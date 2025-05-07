@@ -2,36 +2,36 @@ const { googleSignupPayload, signupWithPassword, insertBarberData, barberLogout,
 
 const signupUsingGoogle = async (req, res) => {
     const { token } = req.body;
-    
+
     if (!token) {
         return res.status(400).json({
-        message: "Token is required",
+            message: "Token is required",
         });
     }
-    
+
     try {
         const payload = await googleSignupPayload(token);
 
         if (!payload) {
-        return res.status(400).json({
-            message: "Invalid Google token",
-        });
+            return res.status(400).json({
+                message: "Invalid Google token",
+            });
         }
 
         const { sub, email, name } = payload;
 
         return res.status(201).json({
-        message: "User created successfully",
-        user: {
-            id: sub,
-            email,
-            name,
-        },
+            message: "User created successfully",
+            user: {
+                id: sub,
+                email,
+                name,
+            },
         });
     } catch (error) {
         return res.status(500).json({
-        message: "Internal server error",
-        error: error.message,
+            message: "Internal server error",
+            error: error.message,
         });
     }
 }
@@ -96,18 +96,19 @@ const login = async (req, res) => {
             });
         }
 
+        // Set secure cookies
         res.cookie("access_token", data.session.access_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 7 * 1000, // 7 days in milliseconds
-            sameSite: "lax",
+            httpOnly: true, // prevent XSS attacks
+            secure: true,
+            sameSite: "none", // prevents CSRF attack
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 15 minutes
         });
 
         res.cookie("refresh_token", data.session.refresh_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
-            sameSite: "lax",
+            httpOnly: true, // prevent XSS attacks
+            secure: true,
+            sameSite: "none", // prevents CSRF attack
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
 
         return res.status(200).json({
@@ -120,7 +121,8 @@ const login = async (req, res) => {
             error: error.message,
         });
     }
-}
+};
+
 
 const logout = async (req, res) => {
     try {

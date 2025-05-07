@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from "react";
+import { baseUrl } from "../constants";
 
 const LoginForm = ({ onToggle }) => {
     const [formData, setFormData] = useState({
@@ -11,10 +12,24 @@ const LoginForm = ({ onToggle }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Login data:", formData);
-        // Add login logic here
+        try {
+            const response = await axios.post(
+              'https://your-api-domain.com/api/auth/login',
+              { email, password },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                withCredentials: true, // ✅ Required to send/receive cookies cross-site
+              }
+            );
+        
+            console.log('Login successful:', response.data);
+          } catch (error) {
+            console.error('Login failed:', error.response?.data || error.message);
+          }
     };
 
     return (
