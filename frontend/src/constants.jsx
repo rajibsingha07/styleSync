@@ -1,1 +1,1 @@
-export const baseUrl = import.meta.env.VITE_BASE_URL || 'http://127.0.0.1:7860/api/v1';
+export const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:7860/api/v1';

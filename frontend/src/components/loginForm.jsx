@@ -1,8 +1,10 @@
 'use client';
 import React, { useState } from "react";
 import { baseUrl } from "../constants";
+import { useNavigate } from "react-router-dom";
 
 const LoginForm = ({ onToggle }) => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -15,18 +17,27 @@ const LoginForm = ({ onToggle }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post(
-              'https://your-api-domain.com/api/auth/login',
-              { email, password },
-              {
+            const response = await fetch(`${baseUrl}/auth/login`, {
+                method: "POST",
                 headers: {
-                  'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
-                withCredentials: true, // ✅ Required to send/receive cookies cross-site
-              }
-            );
-        
-            console.log('Login successful:', response.data);
+                credentials: "include",
+                body: JSON.stringify(formData),
+            });
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            const data = await response.json();
+
+
+              
+            // Handle successful login
+            navigate("/dashboard");
+            
+            console.log('Login successful:', data);
+          
           } catch (error) {
             console.error('Login failed:', error.response?.data || error.message);
           }

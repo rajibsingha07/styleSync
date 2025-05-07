@@ -29,6 +29,15 @@ const verifyBarber = async (req, res, next) => {
             maxAge: 60 * 60 * 1000, // 1 hour
             sameSite: 'lax',
           });
+
+          if (refreshedSession?.session?.refresh_token) {
+            res.cookie('refresh_token', refreshedSession.session.refresh_token, {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              maxAge: 60 * 60 * 24 * 30 * 1000, // 30 days
+              sameSite: 'lax',
+            });
+          }
   
           req.barber = refreshedSession.user.id;
           return next();

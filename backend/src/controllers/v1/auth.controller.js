@@ -1,4 +1,5 @@
 const { googleSignupPayload, signupWithPassword, insertBarberData, barberLogout, barberLogin } = require("../../repositories/v1/auth.repository");
+require('dotenv').config()
 
 const signupUsingGoogle = async (req, res) => {
     const { token } = req.body;
@@ -58,17 +59,17 @@ const barberRegistration = async (req, res) => {
         );
 
         res.cookie("access_token", data.session.access_token, {
-            httpOnly: true,
+            httpOnly: true, // prevent XSS attacks
             secure: process.env.NODE_ENV === "production",
-            maxAge: 7 * 1000, // 7 days in milliseconds
-            sameSite: "lax",
+            sameSite: "strict", // prevents CSRF attack
+            maxAge: 15 * 60 * 1000, // 15 minutes
         });
 
         res.cookie("refresh_token", data.session.refresh_token, {
-            httpOnly: true,
+            httpOnly: true, // prevent XSS attacks
             secure: process.env.NODE_ENV === "production",
-            maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days in milliseconds
-            sameSite: "lax",
+            sameSite: "strict", // prevents CSRF attack
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
 
         return res.status(201).json({
@@ -96,20 +97,21 @@ const login = async (req, res) => {
             });
         }
 
-        // Set secure cookies
         res.cookie("access_token", data.session.access_token, {
             httpOnly: true, // prevent XSS attacks
-            secure: true,
-            sameSite: "none", // prevents CSRF attack
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 15 minutes
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict", // prevents CSRF attack
+            maxAge: 15 * 60 * 1000, // 15 minutes
         });
 
         res.cookie("refresh_token", data.session.refresh_token, {
             httpOnly: true, // prevent XSS attacks
-            secure: true,
-            sameSite: "none", // prevents CSRF attack
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict", // prevents CSRF attack
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
+
+
 
         return res.status(200).json({
             message: "Login successful",
