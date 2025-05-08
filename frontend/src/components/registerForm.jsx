@@ -1,8 +1,10 @@
 'use client';
 import React, { useState } from "react";
 import { baseUrl } from "../constants";
+import { useNavigate } from "react-router-dom";
 
 const RegisterForm = ({ onToggle }) => {
+    const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         name: '',
@@ -25,21 +27,29 @@ const RegisterForm = ({ onToggle }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const response = await fetch(`${baseUrl}/api/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify(formData),
-        });
-        const data = await response.json();
-        if (!response.ok) {
-            console.error('Error:', data);
-            return;
-        }
-        console.log('Success:', data);
-        alert('Account created successfully!');
+        try {
+            const response = await fetch(`${baseUrl}/auth/register`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify(formData),
+            });
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            const data = await response.json();
+
+
+            alert("Successfully registered!");
+            // Handle successful login
+            navigate("/dashboard");          
+          } catch (error) {
+            alert(error.message)
+            console.error('Login failed:', error.response?.data || error.message);
+          }
     };
 
     return (

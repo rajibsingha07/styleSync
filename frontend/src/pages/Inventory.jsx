@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { baseUrl } from '../constants';
 
 const Inventory = () => {
-    const [inventoryItems, setInventoryItems] = useState([]);
+    const [inventoryItems, setInventoryItems] = useState(null);
     const [newItem, setNewItem] = useState('');
     const [newAmount, setNewAmount] = useState('');
     const [newPrice, setNewPrice] = useState('');
@@ -10,16 +11,56 @@ const Inventory = () => {
         if (!newItem || !newAmount || !newPrice) return;
 
         const newItemObject = {
-            name: newItem,
-            amount: parseFloat(newAmount),
-            price: parseFloat(newPrice),
+            productName: newItem,
+            quantity: parseInt(newAmount),
+            price: parseInt(newPrice),
         };
 
-        setInventoryItems([...inventoryItems, newItemObject]);
+        const response = fetch(`${baseUrl}/inventory/add`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify([newItemObject]),
+        });
+
+        if (!response.ok) {
+            console.error('Failed to add item to inventory');
+            return;
+        }
+        const updatedInventory = response.json();
+        if (!updatedInventory) {
+            console.error('Failed to update inventory');
+            return;
+        }
+
+        alert('Item added successfully!');
+        // Assuming the server returns the updated inventory
+        // setInventoryItems(updatedInventory);
+        handleFetchInventory()
         setNewItem('');
         setNewAmount('');
         setNewPrice('');
     };
+
+    const handleFetchInventory = async () => {
+        const response = await fetch(`${baseUrl}/inventory/all`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            console.error('Failed to fetch inventory');
+            return;
+        }
+
+        const data = await response.json();
+        setInventoryItems(data.inventories.products);
+    }
 
     const handleUpdateField = (index, field, value) => {
         const updatedItems = [...inventoryItems];
@@ -32,16 +73,23 @@ const Inventory = () => {
         setInventoryItems(updatedItems);
     };
 
-    const totalCost = inventoryItems.reduce(
-        (total, item) => total + item.price,
-        0
-    );
+    // const totalCost = inventoryItems.reduce(
+    //     (total, item) => total + item.price,
+    //     0
+    // );
+
+    const totalCost = 0
 
     const getRowColor = (amount) => {
         if (amount < 10) return 'bg-red-300';
         if (amount < 30) return 'bg-yellow-300';
         return '';
     };
+
+    useEffect(() => {
+        handleFetchInventory();
+    }
+    , []);
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
@@ -57,7 +105,7 @@ const Inventory = () => {
                 />
                 <input
                     type="number"
-                    placeholder="Amount (%)"
+                    placeholder="Quantity"
                     value={newAmount}
                     onChange={(e) => setNewAmount(e.target.value)}
                     className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
@@ -77,23 +125,23 @@ const Inventory = () => {
                 </button>
             </div>
 
-            <table className="min-w-full table-auto border">
+            {inventoryItems!=null && <table className="min-w-full table-auto border">
                 <thead className="bg-gray-100">
                     <tr>
                         <th className="py-2 px-4 text-left">Item</th>
-                        <th className="py-2 px-4 text-left">Amount (%)</th>
+                        <th className="py-2 px-4 text-left">Quantity</th>
                         <th className="py-2 px-4 text-left">Price (₹)</th>
                         <th className="py-2 px-4 text-left">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {inventoryItems.map((item, index) => (
-                        <tr key={index} className={`${getRowColor(item.amount)} border-t`}>
-                            <td className="py-2 px-4">{item.name}</td>
+                        <tr key={index} className={`${getRowColor(item.quantity)} border-t`}>
+                            <td className="py-2 px-4">{item.productName}</td>
                             <td className="py-2 px-4">
                                 <input
                                     type="number"
-                                    value={item.amount}
+                                    value={item.quantity}
                                     onChange={(e) =>
                                         handleUpdateField(index, 'amount', e.target.value)
                                     }
@@ -121,7 +169,7 @@ const Inventory = () => {
                         </tr>
                     ))}
                 </tbody>
-            </table>
+            </table>}
 
             <div className="mt-6 text-right text-xl font-semibold">
                 Total Inventory Cost: ₹{totalCost.toFixed(2)}

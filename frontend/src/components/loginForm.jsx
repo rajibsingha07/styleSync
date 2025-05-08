@@ -32,13 +32,14 @@ const LoginForm = ({ onToggle }) => {
             const data = await response.json();
 
 
-              
+            alert("Successfully logged in!");
             // Handle successful login
             navigate("/dashboard");
             
             console.log('Login successful:', data);
           
           } catch (error) {
+            alert("Invalid!")
             console.error('Login failed:', error.response?.data || error.message);
           }
     };
