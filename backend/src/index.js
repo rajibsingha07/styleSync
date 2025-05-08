@@ -4,7 +4,7 @@ const express = require("express");
 const app = express();
 const serverV1 = require("./app.v1.js");
 const connectDB = require("./config/mongo.config.js");
-const host = "0.0.0.0";
+const host = "localhost";
 const port = 7860;
 
 

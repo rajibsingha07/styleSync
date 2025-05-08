@@ -9,6 +9,7 @@ import Financial from "./pages/Financial.jsx"
 import UserList from "./pages/Userlist.jsx";
 import AddService from "./pages/AddService.jsx";
 import Inventory from "./pages/Inventory.jsx";
+import AddCustomer from "./pages/AddCustomer.jsx";
 
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
           <Route path="/expenses" element={<Financial />} />
           <Route path="/userlist" element={<UserList />} />
           <Route path="/addservice" element={<AddService />} />
+          <Route path="/addCustomer" element={<AddCustomer />} />
           <Route path="/inventory" element={<Inventory />} />
         </Routes>
       </div>

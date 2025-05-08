@@ -73,7 +73,8 @@ const getCustomerById = async (req, res) => {
             id: findCustomer.id,
             createdAt: findCustomer.created_at,
             gender: findCustomer.Gender,
-            services: services
+            services: services,
+            total_price: findCustomer.total_price,
         }
 
         return res.status(200).json({

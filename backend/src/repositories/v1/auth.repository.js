@@ -70,10 +70,26 @@ const barberLogout = async () => {
     return true;
 }
 
+const getBarberById = async (barberId) => {
+    const { data, error } = await supabase
+        .from('barbers')
+        .select('*')
+        .eq('barberId', barberId)
+        .single();
+
+    if (error) {
+        console.error("Get barber error:", error);
+        throw new Error(error.message);
+    }
+
+    return data;
+}
+
 module.exports = {
     googleSignupPayload,
     signupWithPassword,
     insertBarberData,
     barberLogout,
-    barberLogin
+    barberLogin,
+    getBarberById
 }

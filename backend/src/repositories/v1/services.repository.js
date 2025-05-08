@@ -15,6 +15,30 @@ const createService = async (barberId, services) => {
         return savedService;
 }
 
+
+const pushNewService = async (barberId, updatedService) => {
+  try {
+    const result = await Service.findOneAndUpdate(
+      { barberId },
+      {
+        $push: {
+          services: updatedService.map(service => {
+            return {
+              serviceName: service.name,
+              price: service.price,
+            };
+          }), // should be { serviceName: ..., price: ... }
+        },
+      },
+      { new: true, upsert: true } // upsert creates a new document if not found
+    );
+
+    return result;
+  } catch (error) {
+    throw new Error(`Failed to push new service: ${error.message}`);
+  }
+};
+
 const editServiceReference = async (barberId, serviceId) => {
     const { data, error } = await supabase
       .from("barbers")
@@ -41,11 +65,15 @@ const getServiceByBarberId = async (barberId) => {
       throw new Error(error.message);
     }
 
-    const findServices = await Service.find({ barberId: barberId });
-    if (!findServices) {
-        throw new Error("No services found");
+    if (!data || data.length === 0) {
+      return [];
     }
-    const services = findServices[0].services.map(service => ({
+
+    const findServices = await Service.findById(data[0].services);
+    if (!findServices) {
+      return []
+    }
+    const services = findServices.services.map(service => ({
         id: service._id,
         serviceName: service.serviceName,
         price: service.price,
@@ -113,5 +141,6 @@ module.exports = {
     editServiceReference,
     getServiceByBarberId,
     getServiceById,
-    getServicesByIDs
+    getServicesByIDs,
+    pushNewService
 };

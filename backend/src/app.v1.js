@@ -1,6 +1,6 @@
 // const compression = require("compression");
 const express = require("express");
-// const cors = require("cors");
+const cors = require("cors");
 const cookieParser = require('cookie-parser');
 
 const helmet = require("helmet");
@@ -12,19 +12,19 @@ const app = express();
 
 
 const bodyParser = require("body-parser");
-// const corsOptions = require("./middleware/cors.options");
 const routesV1 = require("./routes/v1/routes");
+const corsOptions = require("./middlewares/cors.options");
 
-if (process.env.NODE_ENV === "development") {
-  const swaggerUi = require("swagger-ui-express");
-  const swaggerSpec = require("./utils/swaggerOptions");
-  app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-}
+// if (process.env.NODE_ENV === "development") {
+//   const swaggerUi = require("swagger-ui-express");
+//   const swaggerSpec = require("./utils/swaggerOptions");
+//   app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// }
 
 app.disable("etag");
 
 
-// app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 // app.use(compression());
 app.use(helmet({ contentSecurityPolicy: false, xDownloadOptions: false }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));

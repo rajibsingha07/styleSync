@@ -1,7 +1,35 @@
-const { createService, editServiceReference, getServiceByBarberId, getServiceById, getServicesByIDs } = require("../../repositories/v1/services.repository");
+const { getBarberById } = require("../../repositories/v1/auth.repository");
+const { createService, editServiceReference, getServiceByBarberId, getServiceById, getServicesByIDs, pushNewService } = require("../../repositories/v1/services.repository");
 
 const addServices = async (req, res) => {
     const services = req.body;
+
+    const barberId = req.barber;
+
+    const doesServiceExist = await getBarberById(barberId);
+
+    if (doesServiceExist.services) {
+        try {
+            const updatedService = await pushNewService(barberId, services);
+
+            if (!updatedService) {
+                return res.status(404).json({
+                    message: "Service not found",
+                });
+            }
+            return res.status(200).json({
+                message: "Service updated successfully",
+                service: updatedService,
+            });
+        } catch (error) {
+            return res.status(500).json({
+                message: "Internal server error",
+                error: error.message,
+            });
+            
+        }
+    }
+
 
     if (!services) {
         return res.status(400).json({
