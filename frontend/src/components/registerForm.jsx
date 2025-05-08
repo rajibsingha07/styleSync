@@ -2,10 +2,14 @@
 import React, { useState } from "react";
 import { baseUrl } from "../constants";
 import { useNavigate } from "react-router-dom";
+import { FaCheckCircle } from "react-icons/fa";
 
 const RegisterForm = ({ onToggle }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -27,6 +31,7 @@ const RegisterForm = ({ onToggle }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
         try {
             const response = await fetch(`${baseUrl}/auth/register`, {
                 method: "POST",
@@ -37,23 +42,20 @@ const RegisterForm = ({ onToggle }) => {
                 body: JSON.stringify(formData),
             });
             if (!response.ok) {
-                throw new Error("Network response was not ok");
+                throw new Error("Registration failed");
             }
-
-            const data = await response.json();
-
-
-            alert("Successfully registered!");
-            // Handle successful login
-            navigate("/dashboard");          
-          } catch (error) {
-            alert(error.message)
-            console.error('Login failed:', error.response?.data || error.message);
-          }
+            await response.json();
+            setIsLoading(false);
+            setIsSuccess(true);
+            setTimeout(() => navigate("/dashboard"), 1500);
+        } catch (error) {
+            setIsLoading(false);
+            alert(error.message || "Something went wrong");
+        }
     };
 
     return (
-        <main className="bg-white rounded-lg max-w-sm w-full p-6">
+        <main className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 mx-auto">
             <div className="flex justify-center mb-6">
                 <h2 className="text-black font-bold text-2xl">StyleSync</h2>
             </div>
@@ -61,7 +63,7 @@ const RegisterForm = ({ onToggle }) => {
 
             <button
                 type="button"
-                className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-md py-2 mb-3 text-sm text-gray-700 hover:bg-gray-50"
+                className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-md py-2 mb-3 text-sm text-gray-700 hover:bg-gray-50 transition"
             >
                 <img
                     src="https://img.icons8.com/color/512/google-logo.png"
@@ -78,115 +80,111 @@ const RegisterForm = ({ onToggle }) => {
                 <hr className="border-gray-300 flex-grow" />
             </div>
 
-            <form onSubmit={step === 1 ? handleNext : handleSubmit}>
-                {step === 1 ? (
-                    <>
-                        <label className="block text-s font-semibold text-gray-900 mb-1">
-                            Name
-                        </label>
-                        <input
-                            name="name"
-                            type="text"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-s"
-                            placeholder="John Doe"
-                            required
-                        />
-                        <label className="block text-s font-semibold text-gray-900 mb-1">
-                            Email
-                        </label>
-                        <input
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-s"
-                            placeholder="name@example.com"
-                            required
-                        />
+            {isLoading ? (
+                <div className="text-center py-6 text-blue-600 font-semibold text-sm">
+                    <div className="animate-spin inline-block mr-2 border-2 border-blue-500 border-t-transparent rounded-full w-5 h-5"></div>
+                    Signing up...
+                </div>
+            ) : isSuccess ? (
+                <div className="text-center py-6 text-green-600 font-semibold flex flex-col items-center">
+                    <FaCheckCircle size={40} className="mb-2" />
+                    Successfully Registered!
+                </div>
+            ) : (
+                <form onSubmit={step === 1 ? handleNext : handleSubmit}>
+                    {step === 1 ? (
+                        <>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <input
+                                name="name"
+                                type="text"
+                                value={formData.name}
+                                onChange={handleChange}
+                                className="w-full border border-gray-300 rounded-md py-2 px-3 mb-4 text-sm focus:outline-none focus:ring focus:ring-blue-300"
+                                placeholder="John Doe"
+                                required
+                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                className="w-full border border-gray-300 rounded-md py-2 px-3 mb-4 text-sm focus:outline-none focus:ring focus:ring-blue-300"
+                                placeholder="name@example.com"
+                                required
+                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input
+                                name="password"
+                                type="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                className="w-full border border-gray-300 rounded-md py-2 px-3 mb-4 text-sm focus:outline-none focus:ring focus:ring-blue-300"
+                                placeholder="••••••••"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                className="w-full bg-blue-600 text-white font-semibold rounded-md py-2 hover:bg-blue-700 transition"
+                            >
+                                Next
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input
+                                name="phone"
+                                type="text"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                className="w-full border border-gray-300 rounded-md py-2 px-3 mb-4 text-sm"
+                                placeholder="+91..."
+                                required
+                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Shop name</label>
+                            <input
+                                name="shopName"
+                                type="text"
+                                value={formData.shopName}
+                                onChange={handleChange}
+                                className="w-full border border-gray-300 rounded-md py-2 px-3 mb-4 text-sm"
+                                placeholder="Your Shop Name"
+                                required
+                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                            <input
+                                name="location"
+                                type="text"
+                                value={formData.location}
+                                onChange={handleChange}
+                                className="w-full border border-gray-300 rounded-md py-2 px-3 mb-4 text-sm"
+                                placeholder="City, State"
+                                required
+                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Govt. ID Number</label>
+                            <input
+                                name="documentVerificationNumber"
+                                type="text"
+                                value={formData.documentVerificationNumber}
+                                onChange={handleChange}
+                                className="w-full border border-gray-300 rounded-md py-2 px-3 mb-4 text-sm"
+                                placeholder="ID Number"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                className="w-full bg-blue-600 text-white font-semibold rounded-md py-2 hover:bg-blue-700 transition"
+                            >
+                                Create Account
+                            </button>
+                        </>
+                    )}
+                </form>
+            )}
 
-                        <label className="block text-s font-semibold text-gray-900 mb-1">
-                            Password
-                        </label>
-                        <input
-                            name="password"
-                            type="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-s"
-                            placeholder="••••••••"
-                            required
-                        />
-
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 text-white text-m font-semibold rounded-md py-2 hover:bg-blue-700"
-                        >
-                            Next
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <label className="block text-s font-semibold text-gray-900 mb-1">
-                            Phone
-                        </label>
-                        <input
-                            name="phone"
-                            type="text"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-s"
-                            placeholder="+91....."
-                            required
-                        />
-                        <label className="block text-s font-semibold text-gray-900 mb-1">
-                            Shop name
-                        </label>
-                        <input
-                            name="shopName"
-                            type="text"
-                            value={formData.shopName}
-                            onChange={handleChange}
-                            className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-s"
-                            placeholder="Your Shop Name"
-                            required
-                        />
-                        <label className="block text-s font-semibold text-gray-900 mb-1">
-                            Location
-                        </label>
-                        <input
-                            name="location"
-                            type="text"
-                            value={formData.location}
-                            onChange={handleChange}
-                            className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-s"
-                            placeholder="City, State"
-                            required
-                        />
-                        <label className="block text-s font-semibold text-gray-900 mb-1">
-                            Any Govt. Id number
-                        </label>
-                        <input
-                            name="documentVerificationNumber"
-                            type="text"
-                            value={formData.documentVerificationNumber}
-                            onChange={handleChange}
-                            className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-s"
-                            placeholder="City, State"
-                            required
-                        />
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 text-white text-m font-semibold rounded-md py-2 hover:bg-blue-700"
-                        >
-                            Create Account
-                        </button>
-                    </>
-                )}
-            </form>
-
-            <p className="text-s text-gray-600 text-center mt-4">
+            <p className="text-sm text-gray-600 text-center mt-4">
                 Already have an account?{" "}
                 <button onClick={onToggle} className="text-blue-600 hover:underline">
                     Sign in

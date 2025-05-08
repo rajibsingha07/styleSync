@@ -1,7 +1,7 @@
 const supabase = require("../../config/supabase.config");
 
 const addBarbersCustomer = async (barberId, customer) => {
-  const { gender, services } = customer;
+  const { gender, services, total_price } = customer;
 
   const { data, error } = await supabase
     .from('customers') // replace with your table name if different
@@ -10,6 +10,7 @@ const addBarbersCustomer = async (barberId, customer) => {
         barberId,
         Gender: gender,
         Services: services,
+        total_price
       },
     ])
     .select(); // Optional, returns inserted row

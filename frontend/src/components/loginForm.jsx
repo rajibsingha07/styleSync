@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 import { baseUrl } from "../constants";
 import { useNavigate } from "react-router-dom";
+import { FaCheckCircle } from "react-icons/fa";
+import { ImSpinner2 } from "react-icons/im";
 
 const LoginForm = ({ onToggle }) => {
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-    });
+    const [formData, setFormData] = useState({ email: '', password: '' });
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -16,39 +17,58 @@ const LoginForm = ({ onToggle }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setSuccess(false);
+
         try {
             const response = await fetch(`${baseUrl}/auth/login`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify(formData),
             });
-            if (!response.ok) {
-                throw new Error("Network response was not ok");
-            }
+
+            if (!response.ok) throw new Error("Network response was not ok");
 
             const data = await response.json();
-
-
-            alert("Successfully logged in!");
-            // Handle successful login
-            navigate("/dashboard");
-            
             console.log('Login successful:', data);
-          
-          } catch (error) {
-            alert("Invalid!")
-            console.error('Login failed:', error.response?.data || error.message);
-          }
+
+            setSuccess(true);
+            setTimeout(() => {
+                navigate("/dashboard");
+            }, 1500); // Redirect after showing success for 1.5s
+
+        } catch (error) {
+            alert("Invalid credentials!");
+            console.error('Login failed:', error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <main className="bg-white rounded-lg max-w-sm w-full p-6">
+        <main className="bg-white rounded-lg max-w-sm w-full p-6 relative">
+            {(loading || success) && (
+                <div className="absolute inset-0 bg-white bg-opacity-90 flex flex-col items-center justify-center rounded-lg z-10">
+                    {loading && (
+                        <>
+                            <ImSpinner2 className="animate-spin text-blue-600 text-3xl mb-2" />
+                            <p className="text-gray-700 font-semibold">Logging in...</p>
+                        </>
+                    )}
+                    {success && (
+                        <>
+                            <FaCheckCircle className="text-green-600 text-4xl mb-2" />
+                            <p className="text-green-700 font-semibold">Successfully logged in!</p>
+                        </>
+                    )}
+                </div>
+            )}
+
             <div className="flex justify-center mb-6">
                 <h2 className="text-black font-bold text-2xl">StyleSync</h2>
             </div>
+
             <h2 className="text-black font-semibold text-xl mb-4">Login</h2>
 
             <button
@@ -71,41 +91,37 @@ const LoginForm = ({ onToggle }) => {
             </div>
 
             <form onSubmit={handleSubmit}>
-                <label className="block text-s font-semibold text-gray-900 mb-1">
-                    Email
-                </label>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">Email</label>
                 <input
                     name="email"
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-s"
+                    className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-sm"
                     placeholder="name@example.com"
                     required
                 />
 
-                <label className="block text-s font-semibold text-gray-900 mb-1">
-                    Password
-                </label>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">Password</label>
                 <input
                     name="password"
                     type="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-s"
+                    className="w-full border border-gray-200 rounded-md py-2 px-3 mb-4 text-sm"
                     placeholder="••••••••"
                     required
                 />
 
                 <button
                     type="submit"
-                    className="w-full bg-blue-600 text-white text-m font-semibold rounded-md py-2 hover:bg-blue-700"
+                    className="w-full bg-blue-600 text-white text-sm font-semibold rounded-md py-2 hover:bg-blue-700"
                 >
                     Log In
                 </button>
             </form>
 
-            <p className="text-s text-gray-600 text-center mt-4">
+            <p className="text-sm text-gray-600 text-center mt-4">
                 Don't have an account?{" "}
                 <button onClick={onToggle} className="text-blue-600 hover:underline">
                     Create one

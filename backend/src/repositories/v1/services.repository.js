@@ -65,11 +65,15 @@ const getServiceByBarberId = async (barberId) => {
       throw new Error(error.message);
     }
 
-    const findServices = await Service.find({ barberId: barberId });
-    if (!findServices) {
-        throw new Error("No services found");
+    if (!data || data.length === 0) {
+      return [];
     }
-    const services = findServices[0].services.map(service => ({
+
+    const findServices = await Service.findById(data[0].services);
+    if (!findServices) {
+      return []
+    }
+    const services = findServices.services.map(service => ({
         id: service._id,
         serviceName: service.serviceName,
         price: service.price,

@@ -1,299 +1,225 @@
-import React, { useState, useEffect } from 'react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { baseUrl } from "../constants";
+
 
 const Financial = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [customers, setCustomers] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
 
-    const [startDate, setStartDate] = useState(new Date());
-    const [endDate, setEndDate] = useState(new Date());
-    const [earningsList, setEarningsList] = useState([]);
-    const [expensesList, setExpensesList] = useState([]);
-    const [editEarningId, setEditEarningId] = useState(null);
-    const [editExpenseId, setEditExpenseId] = useState(null);
-    const [editedEarning, setEditedEarning] = useState({});
-    const [editedExpense, setEditedExpense] = useState({});
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const customerRes = await fetch(`${baseUrl}/customer/all`, {
+          credentials: "include",
+        });
+        const inventoryRes = await fetch(`${baseUrl}/inventory/all`, {
+          credentials: "include",
+        });
 
-    const dummyEarnings = [
-        { id: 1, client: 'Ravi', service: 'Haircut', price: 150, payment: 'Cash', date: new Date() },
-        { id: 2, client: 'Amit', service: 'Shave', price: 80, payment: 'UPI', date: new Date() },
-        { id: 3, client: 'Suman', service: 'Facial', price: 250, payment: 'Cash', date: new Date('2025-05-05') },
-        { id: 4, client: 'Karan', service: 'Haircut + Shave', price: 200, payment: 'UPI', date: new Date('2025-05-05') },
-    ];
+        if (customerRes.status === 401 || inventoryRes.status === 401) {
+          alert('Unauthorized! Please log in again.');
+          navigate("/auth");
+          return;
+          
+      }
 
-    const dummyExpenses = [
-        { id: 1, item: 'Shampoo Bottle', cost: 100, payment: 'Cash', date: new Date() },
-        { id: 2, item: 'Blade Pack', cost: 40, payment: 'UPI', date: new Date() },
-        { id: 3, item: 'Facial Cream', cost: 120, payment: 'Cash', date: new Date('2025-05-05') },
-    ];
+        const customerData = await customerRes.json();
+        const inventoryData = await inventoryRes.json();
 
-    useEffect(() => {
-        filterFinancialsByDateRange();
-    }, [startDate, endDate]);
-
-    const filterFinancialsByDateRange = () => {
-        const filteredEarnings = dummyEarnings.filter(
-            (entry) => entry.date >= startDate && entry.date <= endDate
-        );
-        const filteredExpenses = dummyExpenses.filter(
-            (entry) => entry.date >= startDate && entry.date <= endDate
-        );
-        setEarningsList(filteredEarnings);
-        setExpensesList(filteredExpenses);
+        setCustomers(customerData?.customers || []);
+        const inventoryItems = inventoryData?.inventories?.products || [];
+        setExpenses(inventoryItems);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const totalEarnings = earningsList.reduce((sum, e) => sum + e.price, 0);
-    const totalExpenses = expensesList.reduce((sum, e) => sum + e.cost, 0);
-    const profit = totalEarnings - totalExpenses;
+    fetchData();
+  }, []);
 
-    const handleDelete = (type, id) => {
-        if (type === 'earning') {
-            setEarningsList(prev => prev.filter(item => item.id !== id));
-        } else {
-            setExpensesList(prev => prev.filter(item => item.id !== id));
-        }
-    };
+  const filterByDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return (!fromDate || date >= fromDate) && (!toDate || date <= toDate);
+  };
 
-    const startEditEarning = (entry) => {
-        setEditEarningId(entry.id);
-        setEditedEarning({ ...entry });
-    };
+  const filteredCustomers = customers.filter(
+    (c) => c.created_at && filterByDate(c.created_at)
+  );
+  const filteredExpenses = expenses.filter(
+    (e) => e.lastUpdated && filterByDate(e.lastUpdated)
+  );
 
-    const saveEditEarning = () => {
-        setEarningsList(prev =>
-            prev.map(item => (item.id === editEarningId ? editedEarning : item))
-        );
-        setEditEarningId(null);
-    };
+  const totalIncome = filteredCustomers.reduce(
+    (acc, cur) => acc + (cur.total_price || 0),
+    0
+  );
+  const totalExpenses = filteredExpenses.reduce(
+    (acc, cur) => acc + (cur.price || 0),
+    0
+  );
+  const netProfit = totalIncome - totalExpenses;
 
-    const startEditExpense = (entry) => {
-        setEditExpenseId(entry.id);
-        setEditedExpense({ ...entry });
-    };
+  const chartData = [
+    { name: "Income", amount: totalIncome },
+    { name: "Expenses", amount: totalExpenses },
+    { name: "Net Profit", amount: netProfit },
+  ];
 
-    const saveEditExpense = () => {
-        setExpensesList(prev =>
-            prev.map(item => (item.id === editExpenseId ? editedExpense : item))
-        );
-        setEditExpenseId(null);
-    };
+  return (
+    <div className="p-4 max-w-7xl mx-auto">
+      <button
+        className="flex items-center gap-2 text-blue-600 mb-4"
+        onClick={() => navigate("/dashboard")}
+      >
+        <FaArrowLeft /> Back to Dashboard
+      </button>
 
-    return (
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-white shadow-lg rounded-lg">
-            <h2 className="text-3xl font-bold text-center text-gray-700 mb-6">📊 Financial Summary</h2>
+      <h1 className="text-3xl font-bold mb-6 text-center">Financial Report</h1>
 
-            <button
-                onClick={() => navigate('/dashboard')}
-                className="mb-6 px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600"
-            >
-                Back
-            </button>
-
-            {/* Date Picker */}
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-4 mb-6">
-                <DatePicker
-                    selected={startDate}
-                    onChange={(date) => setStartDate(date)}
-                    selectsStart
-                    startDate={startDate}
-                    endDate={endDate}
-                    dateFormat="MMMM d, yyyy"
-                    className="p-2 border border-gray-300 rounded w-full sm:w-64"
-                />
-                <DatePicker
-                    selected={endDate}
-                    onChange={(date) => setEndDate(date)}
-                    selectsEnd
-                    startDate={startDate}
-                    endDate={endDate}
-                    minDate={startDate}
-                    dateFormat="MMMM d, yyyy"
-                    className="p-2 border border-gray-300 rounded w-full sm:w-64"
-                />
-            </div>
-
-            {/* Income Table */}
-            <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-2">Income</h3>
-                <div className="w-full overflow-x-auto">
-                    <table className="min-w-full table-auto border text-sm sm:text-base">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="px-4 py-2 text-left">Name</th>
-                                <th className="px-4 py-2 text-left">Service</th>
-                                <th className="px-4 py-2 text-left">Price</th>
-                                <th className="px-4 py-2 text-left">Payment</th>
-                                <th className="px-4 py-2 text-left">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {earningsList.map((entry) => (
-                                <tr key={entry.id} className="border-t">
-                                    <td className="px-4 py-2">
-                                        {editEarningId === entry.id ? (
-                                            <input
-                                                type="text"
-                                                value={editedEarning.client}
-                                                onChange={(e) =>
-                                                    setEditedEarning({ ...editedEarning, client: e.target.value })
-                                                }
-                                                className="border px-2 py-1 rounded w-full"
-                                            />
-                                        ) : (
-                                            entry.client
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        {editEarningId === entry.id ? (
-                                            <input
-                                                type="text"
-                                                value={editedEarning.service}
-                                                onChange={(e) =>
-                                                    setEditedEarning({ ...editedEarning, service: e.target.value })
-                                                }
-                                                className="border px-2 py-1 rounded w-full"
-                                            />
-                                        ) : (
-                                            entry.service
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        {editEarningId === entry.id ? (
-                                            <input
-                                                type="number"
-                                                value={editedEarning.price}
-                                                onChange={(e) =>
-                                                    setEditedEarning({ ...editedEarning, price: parseInt(e.target.value) })
-                                                }
-                                                className="border px-2 py-1 rounded w-full"
-                                            />
-                                        ) : (
-                                            entry.price
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        {editEarningId === entry.id ? (
-                                            <input
-                                                type="text"
-                                                value={editedEarning.payment}
-                                                onChange={(e) =>
-                                                    setEditedEarning({ ...editedEarning, payment: e.target.value })
-                                                }
-                                                className="border px-2 py-1 rounded w-full"
-                                            />
-                                        ) : (
-                                            entry.payment
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-2 space-x-2">
-                                        {editEarningId === entry.id ? (
-                                            <button className="text-green-600 hover:underline" onClick={saveEditEarning}>
-                                                Save
-                                            </button>
-                                        ) : (
-                                            <button className="text-blue-600 hover:underline" onClick={() => startEditEarning(entry)}>
-                                                Edit
-                                            </button>
-                                        )}
-                                        <button className="text-red-600 hover:underline" onClick={() => handleDelete('earning', entry.id)}>
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="text-right font-medium mt-2">Total Income: ₹{totalEarnings}</div>
-            </div>
-
-            {/* Expense Table */}
-            <div className="mb-8">
-                <h3 className="text-xl font-semibold mb-2">Expenses</h3>
-                <div className="w-full overflow-x-auto">
-                    <table className="min-w-full table-auto border text-sm sm:text-base">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="px-4 py-2 text-left">Purchase</th>
-                                <th className="px-4 py-2 text-left">Amount</th>
-                                <th className="px-4 py-2 text-left">Payment</th>
-                                <th className="px-4 py-2 text-left">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {expensesList.map((entry) => (
-                                <tr key={entry.id} className="border-t">
-                                    <td className="px-4 py-2">
-                                        {editExpenseId === entry.id ? (
-                                            <input
-                                                type="text"
-                                                value={editedExpense.item}
-                                                onChange={(e) =>
-                                                    setEditedExpense({ ...editedExpense, item: e.target.value })
-                                                }
-                                                className="border px-2 py-1 rounded w-full"
-                                            />
-                                        ) : (
-                                            entry.item
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        {editExpenseId === entry.id ? (
-                                            <input
-                                                type="number"
-                                                value={editedExpense.cost}
-                                                onChange={(e) =>
-                                                    setEditedExpense({ ...editedExpense, cost: parseInt(e.target.value) })
-                                                }
-                                                className="border px-2 py-1 rounded w-full"
-                                            />
-                                        ) : (
-                                            entry.cost
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-2">
-                                        {editExpenseId === entry.id ? (
-                                            <input
-                                                type="text"
-                                                value={editedExpense.payment}
-                                                onChange={(e) =>
-                                                    setEditedExpense({ ...editedExpense, payment: e.target.value })
-                                                }
-                                                className="border px-2 py-1 rounded w-full"
-                                            />
-                                        ) : (
-                                            entry.payment
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-2 space-x-2">
-                                        {editExpenseId === entry.id ? (
-                                            <button className="text-green-600 hover:underline" onClick={saveEditExpense}>
-                                                Save
-                                            </button>
-                                        ) : (
-                                            <button className="text-blue-600 hover:underline" onClick={() => startEditExpense(entry)}>
-                                                Edit
-                                            </button>
-                                        )}
-                                        <button className="text-red-600 hover:underline" onClick={() => handleDelete('expense', entry.id)}>
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="text-right font-medium mt-2">Total Expenses: ₹{totalExpenses}</div>
-            </div>
-
-            {/* Net Profit */}
-            <div className="text-right font-bold text-xl">
-                Net Profit: ₹{profit}
-            </div>
+      <div className="flex flex-col md:flex-row gap-4 mb-6 justify-center">
+        <div>
+          <label className="block mb-1 font-medium">From Date:</label>
+          <DatePicker
+            selected={fromDate}
+            onChange={(date) => setFromDate(date)}
+            className="border px-3 py-2 rounded w-full"
+            placeholderText="Select start date"
+          />
         </div>
-    );
+        <div>
+          <label className="block mb-1 font-medium">To Date:</label>
+          <DatePicker
+            selected={toDate}
+            onChange={(date) => setToDate(date)}
+            className="border px-3 py-2 rounded w-full"
+            placeholderText="Select end date"
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-center font-semibold text-lg">Loading...</p>
+      ) : (
+        <>
+          <div className="overflow-x-auto mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Income Table</h2>
+            <table className="min-w-full border border-gray-300">
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="border px-4 py-2">Customer No.</th>
+                  <th className="border px-4 py-2">Gender</th>
+                  <th className="border px-4 py-2">Price</th>
+                  <th className="border px-4 py-2">Date</th>
+                  <th className="border px-4 py-2">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCustomers.map((c) => {
+                  const date = new Date(c.created_at);
+                  return (
+                    <tr key={c.id} className="text-center">
+                      <td className="border px-4 py-2">{c.id}</td>
+                      <td className="border px-4 py-2">{c.Gender}</td>
+                      <td className="border px-4 py-2">
+                        {c.total_price ?? "N/A"}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {date.toLocaleDateString()}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {date.toLocaleTimeString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="overflow-x-auto mb-8">
+            <h2 className="text-2xl font-semibold mb-4">Expenses Table</h2>
+            <table className="min-w-full border border-gray-300">
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="border px-4 py-2">Purchased Item</th>
+                  <th className="border px-4 py-2">Price</th>
+                  <th className="border px-4 py-2">Date</th>
+                  <th className="border px-4 py-2">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredExpenses.map((item, idx) => {
+                  const date = new Date(item.lastUpdated);
+                  return (
+                    <tr key={idx} className="text-center">
+                      <td className="border px-4 py-2">{item.productName}</td>
+                      <td className="border px-4 py-2">{item.price}</td>
+                      <td className="border px-4 py-2">
+                        {date.toLocaleDateString()}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {date.toLocaleTimeString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-semibold mb-4">Summary</h2>
+            <p className="text-lg">
+              Total Income: <strong>₹{totalIncome}</strong>
+            </p>
+            <p className="text-lg">
+              Total Expenses: <strong>₹{totalExpenses}</strong>
+            </p>
+            <p className="text-lg">
+              Net Profit: <strong>₹{netProfit}</strong>
+            </p>
+          </div>
+
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="amount" fill="#4F46E5" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
+    </div>
+  );
 };
 
 export default Financial;

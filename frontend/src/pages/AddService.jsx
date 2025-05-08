@@ -1,142 +1,161 @@
 import React, { useState } from "react";
+import { FaCheckCircle, FaTrash, FaPlus, FaArrowLeft } from "react-icons/fa";
+import { baseUrl } from "../constants";
 import { useNavigate } from "react-router-dom";
 
-const predefinedServices = [
-    { id: 1, name: "Haircut", price: 250 },
-    { id: 2, name: "Shave", price: 150 },
-    { id: 3, name: "Facial", price: 300 },
-    { id: 4, name: "Hair Color", price: 500 },
+const commonServices = [
+  "Haircut",
+  "Head Massage",
+  "Shaving",
+  "Hair Coloring",
+  "Beard Trim",
+  "Facial",
+  "Hair Wash",
 ];
 
-function AddService() {
-    const navigate = useNavigate();
-    const [selectedServices, setSelectedServices] = useState([]);
-    const [totalPrice, setTotalPrice] = useState(0);
-    const [gender, setGender] = useState("");
+const AddService = () => {
+  const navigate = useNavigate();
+  const [serviceName, setServiceName] = useState("");
+  const [customService, setCustomService] = useState("");
+  const [price, setPrice] = useState("");
+  const [services, setServices] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-    const handleChangeService = (e) => {
-        const selectedServiceId = parseInt(e.target.value);
-        let updatedSelectedServices = [...selectedServices];
+  const handleAddToList = () => {
+    const name = serviceName === "custom" ? customService.trim() : serviceName;
+    if (!name || !price) return alert("Please fill both name and price.");
+    setServices([...services, { name, price: parseInt(price) }]);
+    setServiceName("");
+    setCustomService("");
+    setPrice("");
+  };
 
-        if (updatedSelectedServices.includes(selectedServiceId)) {
-            updatedSelectedServices = updatedSelectedServices.filter(
-                (id) => id !== selectedServiceId
-            );
-        } else {
-            updatedSelectedServices.push(selectedServiceId);
-        }
+  const handleRemove = (index) => {
+    setServices(services.filter((_, i) => i !== index));
+  };
 
-        setSelectedServices(updatedSelectedServices);
+  const handleSubmit = async () => {
+    if (services.length === 0) return alert("No services to submit.");
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${baseUrl}/service/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(services),
+      });
 
-        let newTotalPrice = 0;
-        updatedSelectedServices.forEach((id) => {
-            const service = predefinedServices.find((s) => s.id === id);
-            newTotalPrice += service.price;
-        });
+      if (!res.ok) throw new Error("Failed to add services");
 
-        setTotalPrice(newTotalPrice);
-    };
+      setIsSubmitting(false);
+      setIsSuccess(true);
+      setServices([]);
+      setTimeout(() => setIsSuccess(false), 3000);
+    } catch (err) {
+      setIsSubmitting(false);
+      alert(err.message || "Something went wrong!");
+    }
+  };
 
-    const handleGenderChange = (selectedGender) => {
-        setGender(selectedGender);
-    };
+  return (
+    <div className="max-w-2xl mx-auto mt-10 bg-white p-6 rounded-xl shadow-md">
+       <button
+        className="flex items-center gap-2 text-blue-600 mb-4"
+        onClick={() => navigate("/dashboard")}
+      >
+        <FaArrowLeft /> Back to Dashboard
+      </button>
+      <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">
+        Add Your Services
+      </h2>
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        console.log("Services Added:", selectedServices);
-        console.log("Total Price:", totalPrice);
-        console.log("Gender:", gender);
-        navigate("/userlist");
-    };
+      {/* Service Selector */}
+      <div className="mb-4">
+        <label className="block font-medium mb-1 text-gray-700">Select a Service</label>
+        <select
+          className="w-full border border-gray-300 p-2 rounded mb-2"
+          value={serviceName}
+          onChange={(e) => setServiceName(e.target.value)}
+        >
+          <option value="">-- Choose --</option>
+          {commonServices.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+          <option value="custom">Other (Type manually)</option>
+        </select>
 
-    const handleBackClick = () => {
-        navigate("/dashboard");
-    };
+        {serviceName === "custom" && (
+          <input
+            type="text"
+            className="w-full border border-gray-300 p-2 rounded mb-2"
+            placeholder="Enter custom service name"
+            value={customService}
+            onChange={(e) => setCustomService(e.target.value)}
+          />
+        )}
 
-    return (
-        <div className="bg-gray-100 flex justify-center items-center p-2">
-            <div className="bg-white rounded-md w-full max-w-md p-4 shadow-md">
-                <h1 className="text-center font-extrabold text-2xl sm:text-3xl mb-4">
-                    Add New Service
-                </h1>
+        <input
+          type="number"
+          className="w-full border border-gray-300 p-2 rounded mb-2"
+          placeholder="Enter Price (₹)"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
 
+        <button
+          onClick={handleAddToList}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        >
+          <FaPlus /> Add to List
+        </button>
+      </div>
+
+      {/* List of Added Services */}
+      {services.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2 text-gray-800">Services to be Added:</h3>
+          <ul className="space-y-2">
+            {services.map((s, i) => (
+              <li
+                key={i}
+                className="flex justify-between items-center bg-gray-100 px-4 py-2 rounded"
+              >
+                <span>{s.name} - ₹{s.price}</span>
                 <button
-                    onClick={handleBackClick}
-                    className="mb-4 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
+                  onClick={() => handleRemove(i)}
+                  className="text-red-600 hover:text-red-800"
+                  title="Remove"
                 >
-                    Back
+                  <FaTrash />
                 </button>
-
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Select Services
-                        </label>
-                        <div className="space-y-2">
-                            {predefinedServices.map((service) => (
-                                <div key={service.id} className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        value={service.id}
-                                        id={`service-${service.id}`}
-                                        onChange={handleChangeService}
-                                        className="mr-2"
-                                    />
-                                    <label htmlFor={`service-${service.id}`} className="text-sm text-gray-700">
-                                        {service.name} - ₹{service.price}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Select Gender
-                        </label>
-                        <div className="flex items-center space-x-6">
-                            <label className="flex items-center space-x-2">
-                                <input
-                                    type="checkbox"
-                                    checked={gender === "Male"}
-                                    onChange={() => handleGenderChange("Male")}
-                                />
-                                <span>Male</span>
-                            </label>
-                            <label className="flex items-center space-x-2">
-                                <input
-                                    type="checkbox"
-                                    checked={gender === "Female"}
-                                    onChange={() => handleGenderChange("Female")}
-                                />
-                                <span>Female</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div className="mb-4">
-                        <label htmlFor="totalPrice" className="block text-sm font-medium text-gray-700 mb-2">
-                            Total Price
-                        </label>
-                        <input
-                            type="number"
-                            id="totalPrice"
-                            value={totalPrice}
-                            onChange={(e) => setTotalPrice(Number(e.target.value))}
-                            className="w-full p-2 border rounded-md"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        className="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700"
-                    >
-                        Add Service
-                    </button>
-                </form>
-            </div>
+              </li>
+            ))}
+          </ul>
         </div>
-    );
-}
+      )}
+
+      {/* Submit Button */}
+      {isSubmitting ? (
+        <div className="text-center text-blue-600 font-medium">
+          <div className="animate-spin inline-block mr-2 border-2 border-blue-500 border-t-transparent rounded-full w-5 h-5"></div>
+          Adding services...
+        </div>
+      ) : isSuccess ? (
+        <div className="text-center text-green-600 font-semibold flex flex-col items-center">
+          <FaCheckCircle size={40} className="mb-2" />
+          Services added successfully!
+        </div>
+      ) : (
+        <button
+          onClick={handleSubmit}
+          className="w-full bg-green-600 text-white py-2 rounded-md font-semibold hover:bg-green-700 transition"
+        >
+          Add Services
+        </button>
+      )}
+    </div>
+  );
+};
 
 export default AddService;

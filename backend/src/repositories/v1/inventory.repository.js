@@ -40,7 +40,7 @@ const getInventoryByBarberId = async (barberId) => {
 
     const findInventories = await Inventory.findById(data[0].inventories);
     if (!findInventories) {
-        throw new Error("No services found");
+      return []
     }
 
     return findInventories;
