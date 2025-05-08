@@ -12,24 +12,22 @@ function AddService() {
     const navigate = useNavigate();
     const [selectedServices, setSelectedServices] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
+    const [gender, setGender] = useState("");
 
     const handleChangeService = (e) => {
         const selectedServiceId = parseInt(e.target.value);
         let updatedSelectedServices = [...selectedServices];
 
         if (updatedSelectedServices.includes(selectedServiceId)) {
-            // Remove the service if it's already selected
             updatedSelectedServices = updatedSelectedServices.filter(
                 (id) => id !== selectedServiceId
             );
         } else {
-            // Add the service if it's not selected
             updatedSelectedServices.push(selectedServiceId);
         }
 
         setSelectedServices(updatedSelectedServices);
 
-        // Calculate total price
         let newTotalPrice = 0;
         updatedSelectedServices.forEach((id) => {
             const service = predefinedServices.find((s) => s.id === id);
@@ -39,14 +37,20 @@ function AddService() {
         setTotalPrice(newTotalPrice);
     };
 
+    const handleGenderChange = (selectedGender) => {
+        setGender(selectedGender);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log("Services Added: ", selectedServices, totalPrice);
-        // After submission, navigate back to the dashboard
+        console.log("Services Added:", selectedServices);
+        console.log("Total Price:", totalPrice);
+        console.log("Gender:", gender);
         navigate("/userlist");
     };
+
     const handleBackClick = () => {
-        navigate('/dashboard'); // Navigate back to the dashboard
+        navigate("/dashboard");
     };
 
     return (
@@ -55,16 +59,17 @@ function AddService() {
                 <h1 className="text-center font-extrabold text-2xl sm:text-3xl mb-4">
                     Add New Service
                 </h1>
-                {/* Back Button */}
+
                 <button
                     onClick={handleBackClick}
                     className="mb-4 px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600"
                 >
                     Back
                 </button>
+
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label htmlFor="service" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             Select Services
                         </label>
                         <div className="space-y-2">
@@ -78,10 +83,34 @@ function AddService() {
                                         className="mr-2"
                                     />
                                     <label htmlFor={`service-${service.id}`} className="text-sm text-gray-700">
-                                        {service.name} - ${service.price}
+                                        {service.name} - ₹{service.price}
                                     </label>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Select Gender
+                        </label>
+                        <div className="flex items-center space-x-6">
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={gender === "Male"}
+                                    onChange={() => handleGenderChange("Male")}
+                                />
+                                <span>Male</span>
+                            </label>
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={gender === "Female"}
+                                    onChange={() => handleGenderChange("Female")}
+                                />
+                                <span>Female</span>
+                            </label>
                         </div>
                     </div>
 

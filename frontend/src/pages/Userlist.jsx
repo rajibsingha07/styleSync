@@ -11,6 +11,7 @@ const UserList = () => {
     useEffect(() => {
         // Simulate fetching user data for the selected date
         fetchUserData(selectedDate);
+        console.log('Selected date:', selectedDate);
     }, [selectedDate]);
 
     const handleDateChange = (date) => {

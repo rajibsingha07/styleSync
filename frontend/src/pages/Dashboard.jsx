@@ -41,7 +41,7 @@ function Dashboard() {
                             type="button"
                             className="w-full flex items-center justify-between bg-gradient-to-r from-[#C2D4EF] to-[#A3BDE6] rounded-xl py-4 px-5 text-black font-medium text-lg shadow hover:shadow-md transition"
                         >
-                            <span>💰 Expenses</span>
+                            <span>💰 Financials</span>
                             <img
                                 src="https://storage.googleapis.com/a1aa/image/e938a731-23ba-4c8e-8364-adaff48ea523.jpg"
                                 alt="Expenses icon"
