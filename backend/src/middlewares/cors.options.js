@@ -4,7 +4,8 @@ const corsOptions = {
           "http://localhost:5173",
           "http://localhost:5174",
           "http://127.0.0.1:7860",
-          "http://192.168.188.252:5173"
+          "http://192.168.188.252:5173",
+        "https://style-sync-delta.vercel.app"
       ];
 
       if (!origin || allowedOrigins.includes(origin)) {
